@@ -142,6 +142,19 @@ public:
         }
         return aux->dato;
     }
+    bool belongs(const T &value)
+    {
+        Node<T> *aux = _first;
+        while (aux != nullptr)
+        {
+            if (aux->dato == value)
+            {
+                return true;
+            }
+            aux = aux->siguiente;
+        }
+        return false;
+    }
     void insert(const T &value, const int &index)
     {
         if (index < 0 || index > quantityElements)
@@ -197,15 +210,15 @@ class arbol
 {
 public:
     string identificador;
-    string conexion;
-    int tiempo;
-    arbol *siguiente;
+    List<string> conexiones;
+    List<int> tiempos;
+    List<arbol *> siguientes;
     arbol() = default;
     arbol(string identificador, string conexion, int tiempo)
     {
-        this->tiempo = tiempo;
+        this->tiempos.add(tiempo);
         this->identificador = identificador;
-        this->conexion = conexion;
+        this->conexiones.add(conexion);
     }
     arbol(string identificador)
     {
@@ -213,40 +226,103 @@ public:
     }
 };
 
+bool pertenece(List<arbol *> bosque, string identificador)
+{
+    for (int i = 0; i < bosque.elements(); i++)
+    {
+        if (identificador == bosque.get(i)->identificador)
+            return true;
+    }
+    return false;
+}
+
 int main()
 {
     int T;
     int N;
     cin >> T >> N;
     List<arbol *> bosque;
+    // Leer Entrada
     for (int i = 0; i < N; i++)
     {
         string identificador;
         string conexion;
         int tiempo;
         cin >> identificador >> conexion >> tiempo;
-        arbol *aux1 = new arbol(identificador, conexion, tiempo);
-        arbol *aux2 = new arbol(conexion);
-        bosque.add(aux1);
-        bosque.add(aux2);
-    }
-    for (int i = 0; i < N; i++)
-    {
-        arbol *arbol1 = bosque.get(i);
-        for (int j = 0; j < N; j++)
+        bool pertenece1 = false;
+        for (int j = 0; j < bosque.elements(); j++)
         {
-            arbol *arbol2 = bosque.get(j);
-            if (arbol1->conexion == arbol2->identificador)
+            if (identificador == bosque.get(j)->identificador)
             {
-                arbol1->siguiente = arbol2;
+                bosque.get(j)->conexiones.add(conexion);
+                bosque.get(j)->tiempos.add(tiempo);
+                pertenece1 = true;
                 break;
-            };
+            }
+        }
+        if (!pertenece1)
+        {
+            arbol *aux1 = new arbol(identificador, conexion, tiempo);
+            bosque.add(aux1);
+        }
+        bool pertenece2 = false;
+        for (int j = 0; j < bosque.elements(); j++)
+        {
+            if (conexion == bosque.get(j)->identificador)
+            {
+                pertenece2 = true;
+                break;
+            }
+        }
+        if (!pertenece2)
+        {
+            arbol *aux2 = new arbol(conexion);
+            bosque.add(aux2);
         }
     }
-    for (int i = 0; i < N; i++)
+    // Imprimir Bosque
+    // cout << endl
+    //      << endl;
+    // for (int i = 0; i < bosque.elements(); i++)
+    // {
+    //     cout << bosque.get(i)->identificador << " ";
+    //     cout << bosque.get(i)->conexiones.elements() << " ";
+    //     for (int j = 0; j < bosque.get(i)->conexiones.elements(); j++)
+    //     {
+    //         cout << bosque.get(i)->conexiones.get(j) << " " << bosque.get(i)->tiempos.get(j) << "; ";
+    //     }
+    //     cout << endl;
+    // }
+    // Asignar Siguientes
+    for (int i = 0; i < bosque.elements(); i++)
     {
-        arbol *arbol1 = bosque.get(i);
-        cout << arbol1->identificador << " " << arbol1->siguiente->identificador << endl;
+        for (int j = 0; j < bosque.get(i)->conexiones.elements(); j++)
+        {
+            for (int k = 0; k < bosque.elements(); k++)
+            {
+                if (bosque.get(k)->identificador == bosque.get(i)->conexiones.get(j))
+                {
+                    bosque.get(i)->siguientes.add(bosque.get(k));
+                }
+            }
+        }
     }
+    cout << endl
+         << endl;
+    // Imprimir segun otro
+    for (int i = 0; i < bosque.elements(); i++)
+    {
+        cout << bosque.get(i)->identificador << " ";
+        for (int j = 0; j < bosque.get(i)->siguientes.elements(); j++)
+        {
+            cout << bosque.get(i)->siguientes.get(j)->identificador << " ";
+        }
+        cout << endl;
+    }
+    // for (int i = 0; i < N; i++)
+    // {
+    //     arbol *arbol1 = bosque.get(i);
+    //     cout << arbol1->identificador << " " << arbol1->siguiente->identificador << endl;
+    // }
     return 0;
 }
