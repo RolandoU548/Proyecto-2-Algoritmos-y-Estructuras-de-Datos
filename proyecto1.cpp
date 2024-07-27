@@ -1,7 +1,5 @@
 #include <iostream>
 #include <cstring>
-#include <cstdlib>
-#include <cmath>
 
 using namespace std;
 
@@ -26,7 +24,6 @@ char node_names[MAX_NODES][101];
 int node_count = 0;
 int T;
 
-// Cola para BFS
 struct Queue
 {
     int data[MAX_NODES];

@@ -130,8 +130,13 @@ public:
     }
     T get(int index)
     {
+        if (isEmpty())
+        {
+            return T();
+        }
         if (index < 0 || index >= quantityElements)
         {
+            cout << index << "INDEX " << quantityElements << " QUANTITIY" << endl;
             cerr << "Out of range" << endl;
             return T();
         }
@@ -204,6 +209,19 @@ public:
         }
         aux->dato = value;
     }
+    int getIndex(T object)
+    {
+        int contador = 0;
+        Node<T> *aux = _first;
+        while (aux != nullptr)
+        {
+            if (aux->dato = object)
+                return contador;
+            contador++;
+            aux = aux->siguiente;
+        }
+        return -1;
+    }
 };
 
 template <typename T>
@@ -217,7 +235,7 @@ public:
     Queue() = default;
     void push(const T &value)
     {
-        Node *aux = new Node(value);
+        Node<T> *aux = new Node(value);
         if (_first == nullptr)
         {
             _first = aux;
@@ -231,7 +249,7 @@ public:
     T pop()
     {
         T n = _first->dato;
-        Node *aux = _first;
+        Node<T> *aux = _first;
         if (_first = _last)
         {
             _first = nullptr;
@@ -270,11 +288,11 @@ public:
     }
 };
 
-int calcularTiempo(int inicioNodo, int cantidadNodos, bool alcanzable[])
+int calcularTiempo(List<arbol *> bosque, int inicioNodo, int cantidadNodos, bool alcanzable[])
 {
     Queue<int> q;
     bool visitado[cantidadNodos] = {false};
-    int tiempo = 0;
+    int tiempoTotal = 0;
 
     q.push(inicioNodo);
     visitado[inicioNodo] = true;
@@ -283,29 +301,32 @@ int calcularTiempo(int inicioNodo, int cantidadNodos, bool alcanzable[])
     while (!q.isEmpty())
     {
         int node = q.pop();
-        for (Edge *edge = nodes[node].adj; edge != nullptr; edge = edge->next)
+        arbol *arbol = bosque.get(node);
+        while (arbol != nullptr)
         {
-            if (!visitado[edge->to])
+            cout << arbol->identificador << endl;
+            if (!visitado[bosque.getIndex(arbol->siguientes.get(0))])
             {
-                visitado[edge->to] = true;
-                alcanzable[edge->to] = true;
-                tiempo += edge->time;
-                q.push(edge->to);
+                visitado[bosque.getIndex(arbol->siguientes.get(0))] = true;
+                alcanzable[bosque.getIndex(arbol->siguientes.get(0))] = true;
+                tiempoTotal += arbol->tiempos.get(0);
+                if (arbol->siguientes.get(0) != nullptr)
+                    q.push(bosque.getIndex(arbol->siguientes.get(0)));
                 break;
             }
+            arbol = arbol->siguientes.get(0);
         }
     }
-
-    return tiempo;
+    return tiempoTotal;
 }
 
-bool posibleTalar(int inicioNodos[], int cantidadNodos, int T, int &tiempo)
+bool posibleTalar(List<arbol *> bosque, int inicioNodos[], int cantidadNodos, int T, int &tiempo)
 {
     bool alcanzable[cantidadNodos] = {false};
     tiempo = 0;
     for (int i = 0; i < T; ++i)
     {
-        tiempo += calcularTiempo(inicioNodos[i], cantidadNodos, alcanzable);
+        tiempo += calcularTiempo(bosque, inicioNodos[i], cantidadNodos, alcanzable);
     }
     for (int i = 0; i < cantidadNodos; ++i)
     {
@@ -317,12 +338,12 @@ bool posibleTalar(int inicioNodos[], int cantidadNodos, int T, int &tiempo)
     return true;
 }
 
-void combinaciones(int T, int cantidadNodos, int talasActuales, int inicioNodos[], int index, bool &posible, int &mejorTiempo, int mejoresNodos[])
+void combinaciones(List<arbol *> bosque, int T, int cantidadNodos, int talasActuales, int inicioNodos[], bool &posible, int &mejorTiempo, int mejoresNodos[])
 {
     if (talasActuales == T)
     {
         int tiempo;
-        if (posibleTalar(inicioNodos, cantidadNodos, T, tiempo))
+        if (posibleTalar(bosque, inicioNodos, cantidadNodos, T, tiempo))
         {
             posible = true;
             if (tiempo < mejorTiempo)
@@ -336,10 +357,10 @@ void combinaciones(int T, int cantidadNodos, int talasActuales, int inicioNodos[
         }
         return;
     }
-    for (int i = index; i < cantidadNodos; ++i)
+    for (int i = 0; i < cantidadNodos; ++i)
     {
         inicioNodos[talasActuales] = i;
-        combinaciones(T, cantidadNodos, talasActuales + 1, inicioNodos, i + 1, posible, mejorTiempo, mejoresNodos);
+        combinaciones(bosque, T, cantidadNodos, talasActuales + 1, inicioNodos, posible, mejorTiempo, mejoresNodos);
     }
 }
 
@@ -416,10 +437,11 @@ int main()
     else
     {
         int *inicioNodos = new int[T];
+        int *mejoresNodos = new int[T];
         bool posible = false;
         int mejorTiempo = 1e9;
-        int *mejoresNodos = new int[T];
-        combinaciones(T, bosque.elements(), 0, inicioNodos, 0, posible, mejorTiempo, mejoresNodos);
+        combinaciones(bosque, T, bosque.elements(), 0, inicioNodos, posible, mejorTiempo, mejoresNodos);
+        cout << posible << endl;
         if (posible)
         {
             cout << "POSIBLE" << endl;
@@ -428,15 +450,16 @@ int main()
                 cout << bosque.get(mejoresNodos[i])->identificador << endl;
             }
         }
-        else
-        {
-            cout << "IMPOSIBLE" << endl;
-            int best_talas[MAX_NODES];
-            findBestInitialTalas(best_talas);
-            for (int i = 0; i < T; ++i)
-            {
-                cout << bosque.get(best_talas[i])->identificador << endl;
-            }
-        }
+        // else
+        // {
+        //     cout << "IMPOSIBLE" << endl;
+        //     int best_talas[MAX_NODES];
+        //     findBestInitialTalas(best_talas);
+        //     for (int i = 0; i < T; ++i)
+        //     {
+        //         cout << bosque.get(best_talas[i])->identificador << endl;
+        //     }
+        // }
     }
     return 0;
+}
