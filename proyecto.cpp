@@ -206,6 +206,50 @@ public:
     }
 };
 
+template <typename T>
+class Queue
+{
+private:
+    Node<T> *_first = nullptr;
+    Node<T> *_last = nullptr;
+
+public:
+    Queue() = default;
+    void push(const T &value)
+    {
+        Node *aux = new Node(value);
+        if (_first == nullptr)
+        {
+            _first = aux;
+        }
+        else
+        {
+            _last->siguiente = aux;
+        }
+        _last = aux;
+    }
+    T pop()
+    {
+        T n = _first->dato;
+        Node *aux = _first;
+        if (_first = _last)
+        {
+            _first = nullptr;
+            _last = nullptr;
+        }
+        else
+        {
+            _first = _first->siguiente;
+        }
+        delete aux;
+        return n;
+    }
+    bool isEmpty()
+    {
+        return _first == nullptr;
+    }
+};
+
 class arbol
 {
 public:
@@ -226,14 +270,77 @@ public:
     }
 };
 
-bool pertenece(List<arbol *> bosque, string identificador)
+int calcularTiempo(int inicioNodo, int cantidadNodos, bool alcanzable[])
 {
-    for (int i = 0; i < bosque.elements(); i++)
+    Queue<int> q;
+    bool visitado[cantidadNodos] = {false};
+    int tiempo = 0;
+
+    q.push(inicioNodo);
+    visitado[inicioNodo] = true;
+    alcanzable[inicioNodo] = true;
+
+    while (!q.isEmpty())
     {
-        if (identificador == bosque.get(i)->identificador)
-            return true;
+        int node = q.pop();
+        for (Edge *edge = nodes[node].adj; edge != nullptr; edge = edge->next)
+        {
+            if (!visitado[edge->to])
+            {
+                visitado[edge->to] = true;
+                alcanzable[edge->to] = true;
+                tiempo += edge->time;
+                q.push(edge->to);
+                break;
+            }
+        }
     }
-    return false;
+
+    return tiempo;
+}
+
+bool posibleTalar(int inicioNodos[], int cantidadNodos, int T, int &tiempo)
+{
+    bool alcanzable[cantidadNodos] = {false};
+    tiempo = 0;
+    for (int i = 0; i < T; ++i)
+    {
+        tiempo += calcularTiempo(inicioNodos[i], cantidadNodos, alcanzable);
+    }
+    for (int i = 0; i < cantidadNodos; ++i)
+    {
+        if (!alcanzable[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void combinaciones(int T, int cantidadNodos, int talasActuales, int inicioNodos[], int index, bool &posible, int &mejorTiempo, int mejoresNodos[])
+{
+    if (talasActuales == T)
+    {
+        int tiempo;
+        if (posibleTalar(inicioNodos, cantidadNodos, T, tiempo))
+        {
+            posible = true;
+            if (tiempo < mejorTiempo)
+            {
+                mejorTiempo = tiempo;
+                for (int i = 0; i < T; ++i)
+                {
+                    mejoresNodos[i] = inicioNodos[i];
+                }
+            }
+        }
+        return;
+    }
+    for (int i = index; i < cantidadNodos; ++i)
+    {
+        inicioNodos[talasActuales] = i;
+        combinaciones(T, cantidadNodos, talasActuales + 1, inicioNodos, i + 1, posible, mejorTiempo, mejoresNodos);
+    }
 }
 
 int main()
@@ -241,6 +348,8 @@ int main()
     int T;
     int N;
     cin >> T >> N;
+    int *inicioNodos = new int[T];
+    int *mejoresNodos = new int[T];
     List<arbol *> bosque;
     // Leer Entrada
     for (int i = 0; i < N; i++)
@@ -280,19 +389,6 @@ int main()
             bosque.add(aux2);
         }
     }
-    // Imprimir Bosque
-    // cout << endl
-    //      << endl;
-    // for (int i = 0; i < bosque.elements(); i++)
-    // {
-    //     cout << bosque.get(i)->identificador << " ";
-    //     cout << bosque.get(i)->conexiones.elements() << " ";
-    //     for (int j = 0; j < bosque.get(i)->conexiones.elements(); j++)
-    //     {
-    //         cout << bosque.get(i)->conexiones.get(j) << " " << bosque.get(i)->tiempos.get(j) << "; ";
-    //     }
-    //     cout << endl;
-    // }
     // Asignar Siguientes
     for (int i = 0; i < bosque.elements(); i++)
     {
@@ -307,22 +403,40 @@ int main()
             }
         }
     }
-    cout << endl
-         << endl;
-    // Imprimir segun otro
-    for (int i = 0; i < bosque.elements(); i++)
+
+    // Ejecutar Busqueda
+    if (T >= bosque.elements())
     {
-        cout << bosque.get(i)->identificador << " ";
-        for (int j = 0; j < bosque.get(i)->siguientes.elements(); j++)
+        cout << "POSIBLE" << endl;
+        for (int i = 0; i < bosque.elements(); ++i)
         {
-            cout << bosque.get(i)->siguientes.get(j)->identificador << " ";
+            cout << bosque.get(i)->identificador << endl;
         }
-        cout << endl;
     }
-    // for (int i = 0; i < N; i++)
-    // {
-    //     arbol *arbol1 = bosque.get(i);
-    //     cout << arbol1->identificador << " " << arbol1->siguiente->identificador << endl;
-    // }
+    else
+    {
+        int *inicioNodos = new int[T];
+        bool posible = false;
+        int mejorTiempo = 1e9;
+        int *mejoresNodos = new int[T];
+        combinaciones(T, bosque.elements(), 0, inicioNodos, 0, posible, mejorTiempo, mejoresNodos);
+        if (posible)
+        {
+            cout << "POSIBLE" << endl;
+            for (int i = 0; i < T; ++i)
+            {
+                cout << bosque.get(mejoresNodos[i])->identificador << endl;
+            }
+        }
+        else
+        {
+            cout << "IMPOSIBLE" << endl;
+            int best_talas[MAX_NODES];
+            findBestInitialTalas(best_talas);
+            for (int i = 0; i < T; ++i)
+            {
+                cout << bosque.get(best_talas[i])->identificador << endl;
+            }
+        }
+    }
     return 0;
-}
