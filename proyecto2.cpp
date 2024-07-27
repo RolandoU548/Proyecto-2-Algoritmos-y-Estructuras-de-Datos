@@ -271,7 +271,7 @@ struct Queue
 
 int findNode(const string name)
 {
-    for (int i = 0; i < nodes.elements(); ++i)
+    for (int i = 0; i < node_names.elements(); ++i)
     {
         if (node_names.get(i) == name)
         {
@@ -279,8 +279,9 @@ int findNode(const string name)
         }
     }
     node_names.add(name);
-    if (nodes.last())
-        nodes.last()->dato->adj = nullptr;
+    Node *aux = new Node;
+    aux->adj = nullptr;
+    nodes.add(aux);
     return (nodes.elements() - 1);
 }
 
